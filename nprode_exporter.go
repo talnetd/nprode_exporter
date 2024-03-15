@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
 	"gopkg.in/yaml.v2"
 )
 
@@ -42,8 +44,23 @@ func checkPort(ep string, port int) bool {
 }
 
 // push the actual metric to pushGateway
-func pushToGw(ep string, port int, status float64) {
+func pushToGw(ep string, port int, status float64, pgw string, job_name string) {
 	fmt.Printf("Pushing to GW for endpoint: %s, port: %d, status: %.2f \n", ep, port, status)
+	gauge := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "port_status",
+		Help: "Status of the port being monitored ( 1 for open, 0 for closed )",
+	})
+
+	// set the gauge value
+	gauge.Set(status)
+	// and push it
+	if err := push.New(pgw, job_name).
+		Collector(gauge).
+		Grouping("ip", ep).
+		Grouping("port", fmt.Sprintf("%d", port)).
+		Push(); err != nil {
+		fmt.Println("Couldn't push to push Gateway: ", err)
+	}
 }
 
 func main() {
@@ -79,7 +96,7 @@ func main() {
 				}
 
 				// now that status is here time to push
-				pushToGw(ep, port, status)
+				pushToGw(ep, port, status, config.PGW, config.JobName)
 			}
 		}
 

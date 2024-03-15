@@ -1,4 +1,4 @@
-pgw: "http://localhost:9091"
+pgw: "http://pushgateway:9091"
 job_name: "MRD_NPROD_EXPORTER"
 endpoints:
   google.com:

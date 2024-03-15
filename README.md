@@ -36,15 +36,18 @@ by copying it. To run the program simply pass the flag --config /to/your/sample/
 
 Or modify Dockerfile and adjust the config path and run the docker image as container instead.
 ```
-docker run -it -d --name nprode nprode_exporter:latest
+docker run -it -d --name nprode --network prom-backend nprode_exporter:latest
 ```
 
 And you might need a dummy pushgateway then ...
 ```
+docker network create prom-backend
 docker pull prom/pushgateway
-docker run -d -p 9091:9091 prom/pushgateway
+docker run -d -p 9091:9091 --name pushgateway --network prom-backend prom/pushgateway
 ```
 
+If everything works out with sample configuration you should see this in your Prometheus Push Gateway.
+![PGW](./ziki.png)
 
 ## Authors
 TAL:@talnetd
