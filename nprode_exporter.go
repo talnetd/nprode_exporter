@@ -3,15 +3,25 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
 	"time"
+
+	"github.com/alecthomas/kingpin/v2"
+	"gopkg.in/yaml.v2"
 )
 
 // global constants mostly later handle using yaml
 // configuration ...
-const (
-	prome_gw = "http://10.100.254.6:9091"
-	job_name = "nProde_exporter"
+var (
+	configPath = kingpin.Flag("config", "Path to configuration YAML file usually this should be /etc/nprode_config.yaml").Required().String()
 )
+
+// parse the config into a struct
+type Config struct {
+	PGW       string           `yaml:"pgw"`
+	EndPoints map[string][]int `yaml:"endpoints"`
+	JobName   string           `yaml:"job_name"`
+}
 
 // check ip: string at port: int and
 // return bool
@@ -37,14 +47,25 @@ func pushToGw(ep string, port int, status float64) {
 }
 
 func main() {
-	endPoint2PortsMap := map[string][]int{
-		"google.com":     {443},
-		"34.117.118.44":  {443},
-		"myrepublic.net": {443},
+	kingpin.Parse()
+
+	configFile, err := os.ReadFile(*configPath)
+	if err != nil {
+		panic(err)
 	}
 
+	var config Config
+	err = yaml.Unmarshal(configFile, &config)
+	if err != nil {
+		panic(err)
+	}
+
+	// Log the Prometheus Push Gateway and Job Name
+	fmt.Printf("Using Prometheus Push Gateway: %s\n", config.PGW)
+	fmt.Printf("Using Job Name: %s\n", config.JobName)
+
 	for {
-		for ep, ports := range endPoint2PortsMap {
+		for ep, ports := range config.EndPoints {
 			for _, port := range ports {
 				// check port and get the status
 				// status 1 means it is open 0 means

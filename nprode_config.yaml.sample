@@ -1,0 +1,10 @@
+pgw: "http://localhost:9091"
+job_name: "MRD_NPROD_EXPORTER"
+endpoints:
+  google.com:
+    - 443
+    - 80
+  myrepublic.net:
+    - 443
+  facebook.com:
+    - 443
